@@ -1,8 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 from typing import Optional, List
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class RevenuePeriodEnum(str, Enum):

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, Field
 
 
 class ProductBase(BaseModel):

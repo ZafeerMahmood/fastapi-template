@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Optional
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime, Text
 from sqlalchemy.orm import relationship, DeclarativeBase
 
 
@@ -16,7 +15,6 @@ class Category(Base):
     name = Column(String(100), nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
 
-    # Relationships
     products = relationship("Product", back_populates="category", cascade="all, delete-orphan")
 
 
@@ -33,7 +31,6 @@ class Product(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    # Relationships
     category = relationship("Category", back_populates="products")
     inventory = relationship("Inventory", back_populates="product", uselist=False, cascade="all, delete-orphan")
     sales = relationship("SaleItem", back_populates="product", cascade="all, delete-orphan")
@@ -47,7 +44,6 @@ class Inventory(Base):
     quantity = Column(Integer, nullable=False, default=0)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    # Relationships
     product = relationship("Product", back_populates="inventory")
     inventory_history = relationship("InventoryHistory", back_populates="inventory", cascade="all, delete-orphan")
 
@@ -63,7 +59,6 @@ class InventoryHistory(Base):
     reason = Column(String(255), nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relationships
     inventory = relationship("Inventory", back_populates="inventory_history")
 
 
@@ -76,7 +71,6 @@ class Customer(Base):
     phone = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relationships
     sales = relationship("Sale", back_populates="customer", cascade="all, delete-orphan")
 
 
@@ -90,7 +84,6 @@ class Sale(Base):
     payment_method = Column(String(50), nullable=True)
     status = Column(String(50), nullable=False, default="completed")
 
-    # Relationships
     customer = relationship("Customer", back_populates="sales")
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
 
@@ -105,6 +98,5 @@ class SaleItem(Base):
     unit_price = Column(Float, nullable=False)
     subtotal = Column(Float, nullable=False)
 
-    # Relationships
     sale = relationship("Sale", back_populates="items")
     product = relationship("Product", back_populates="sales") 

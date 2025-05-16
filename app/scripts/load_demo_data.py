@@ -135,7 +135,6 @@ async def create_inventory(db: AsyncSession, products):
     db.add_all(inventory_items)
     await db.commit()
     
-    # Refresh to get IDs
     for item in inventory_items:
         await db.refresh(item)
     
@@ -157,7 +156,6 @@ async def create_customers(db: AsyncSession, count=50):
     db.add_all(customers)
     await db.commit()
     
-    # Refresh to get IDs
     for customer in customers:
         await db.refresh(customer)
     
@@ -168,27 +166,23 @@ async def create_sales(db: AsyncSession, products, customers, count=200):
     """Create sales records with items."""
     sales = []
     
-    # Generate sales over the last 12 months
     end_date = datetime.now()
     start_date = end_date - timedelta(days=365)
     
     for _ in range(count):
-        # Random date within the last year
         sale_date = fake.date_time_between(start_date=start_date, end_date=end_date)
         
-        # Create sale
         sale = Sale(
             customer_id=random.choice(customers).id if random.random() > 0.2 else None,
             sale_date=sale_date,
             payment_method=random.choice(["Credit Card", "PayPal", "Bank Transfer", "Cash"]),
             status="completed",
-            total_amount=0  # Will be calculated from items
+            total_amount=0
         )
         
         db.add(sale)
-        await db.flush()  # Get the sale ID
+        await db.flush()
         
-        # Add between 1 and 5 items to the sale
         items_count = random.randint(1, 5)
         selected_products = random.sample(products, items_count)
         
@@ -207,8 +201,6 @@ async def create_sales(db: AsyncSession, products, customers, count=200):
             )
             db.add(sale_item)
             
-            # Update inventory
-            # Use a query instead of db.get() which is having issues
             result = await db.execute(
                 select(Inventory).where(Inventory.product_id == product.id)
             )
@@ -218,7 +210,6 @@ async def create_sales(db: AsyncSession, products, customers, count=200):
                 previous_quantity = inventory.quantity
                 inventory.quantity = max(0, previous_quantity - quantity)
                 
-                # Add inventory history entry
                 history_entry = InventoryHistory(
                     inventory_id=inventory.id,
                     quantity_change=-quantity,
@@ -228,7 +219,6 @@ async def create_sales(db: AsyncSession, products, customers, count=200):
                 )
                 db.add(history_entry)
         
-        # Update the total amount
         sale.total_amount = total_amount
         sales.append(sale)
     

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.session import get_db
-from app.schemas.sales import SaleResponse, SaleCreate, SaleFilter
+from app.schemas.sales import SaleResponse, SaleFilter
 from app.services.sales import SalesService
 
 router = APIRouter()

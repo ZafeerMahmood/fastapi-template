@@ -1,11 +1,11 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, func, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload
 
-from app.models.models import Inventory, Product, Category, InventoryHistory
+from app.models.models import Inventory, Product, InventoryHistory
 from app.schemas.inventory import InventoryUpdate, InventoryResponse
 
 

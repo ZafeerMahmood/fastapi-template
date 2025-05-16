@@ -1,7 +1,7 @@
 from typing import Optional, List
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.session import get_db
