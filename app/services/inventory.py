@@ -100,13 +100,10 @@ class InventoryService:
         if not inventory:
             return None
 
-        # Store previous quantity before update
         previous_quantity = inventory.quantity
         
-        # Update inventory
         inventory.quantity = inventory_data.quantity
         
-        # Create inventory history entry
         history_entry = InventoryHistory(
             inventory_id=inventory.id,
             quantity_change=inventory_data.quantity - previous_quantity,
