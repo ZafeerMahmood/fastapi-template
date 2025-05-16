@@ -1,6 +1,9 @@
 # E-commerce Admin API
-
 A FastAPI-based backend API for an e-commerce admin dashboard. This API provides insights into sales, revenue, and inventory management.
+
+# github repo
+
+https://github.com/ZafeerMahmood/fastapi-template.git
 
 ## Features
 
