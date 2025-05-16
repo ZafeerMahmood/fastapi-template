@@ -39,7 +39,6 @@ async def create_categories(db: AsyncSession):
     db.add_all(categories)
     await db.commit()
     
-    # Refresh to get IDs
     for category in categories:
         await db.refresh(category)
     
@@ -50,7 +49,6 @@ async def create_products(db: AsyncSession, categories):
     """Create products in various categories."""
     products = []
     
-    # Electronics products
     for i in range(20):
         product = Product(
             name=f"{fake.word().capitalize()} {fake.word().capitalize()} Device",
@@ -62,7 +60,6 @@ async def create_products(db: AsyncSession, categories):
         )
         products.append(product)
     
-    # Clothing products
     for i in range(30):
         product = Product(
             name=f"{fake.word().capitalize()} {fake.word().capitalize()} Apparel",
@@ -74,7 +71,6 @@ async def create_products(db: AsyncSession, categories):
         )
         products.append(product)
     
-    # Home & Kitchen products
     for i in range(25):
         product = Product(
             name=f"{fake.word().capitalize()} {fake.word().capitalize()} Home Item",
@@ -86,7 +82,6 @@ async def create_products(db: AsyncSession, categories):
         )
         products.append(product)
     
-    # Books products
     for i in range(40):
         product = Product(
             name=f"{fake.word().capitalize()} {fake.word().capitalize()} Book",
@@ -98,7 +93,6 @@ async def create_products(db: AsyncSession, categories):
         )
         products.append(product)
     
-    # Toys products
     for i in range(15):
         product = Product(
             name=f"{fake.word().capitalize()} {fake.word().capitalize()} Toy",
@@ -113,7 +107,6 @@ async def create_products(db: AsyncSession, categories):
     db.add_all(products)
     await db.commit()
     
-    # Refresh to get IDs
     for product in products:
         await db.refresh(product)
     

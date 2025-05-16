@@ -1,8 +1,8 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional
 from datetime import date, datetime, timedelta
 import calendar
 
-from sqlalchemy import select, func, extract, and_
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Sale, SaleItem, Product, Category
@@ -25,22 +25,19 @@ class RevenueService:
         """
         Get revenue statistics by period (daily, weekly, monthly, or annual).
         """
-        # Set default date range if not provided
         end_date = end_date or date.today()
         if start_date is None:
             if period == RevenuePeriodEnum.DAILY:
-                start_date = end_date - timedelta(days=30)  # Last 30 days
+                start_date = end_date - timedelta(days=30)
             elif period == RevenuePeriodEnum.WEEKLY:
-                start_date = end_date - timedelta(weeks=12)  # Last 12 weeks
+                start_date = end_date - timedelta(weeks=12)
             elif period == RevenuePeriodEnum.MONTHLY:
-                start_date = end_date.replace(month=1 if end_date.month < 13 else 13 - 12)  # Last 12 months
-            else:  # Annual
-                start_date = end_date.replace(year=end_date.year - 5)  # Last 5 years
+                start_date = end_date.replace(month=1 if end_date.month < 13 else 13 - 12)
+            else:
+                start_date = end_date.replace(year=end_date.year - 5)
 
-        # Build the base query
         query = select(Sale)
         
-        # Apply filters
         if category_id is not None:
             query = (
                 query.join(Sale.items)
@@ -49,7 +46,6 @@ class RevenueService:
                 .where(Category.id == category_id)
             )
         
-        # Add date range filter
         query = query.where(
             and_(
                 Sale.sale_date >= datetime.combine(start_date, datetime.min.time()),
@@ -57,11 +53,9 @@ class RevenueService:
             )
         )
         
-        # Execute query to get all sales in the date range
         result = await self.db.execute(query)
         sales = result.scalars().all()
         
-        # Group sales by period
         if period == RevenuePeriodEnum.DAILY:
             return await self._group_revenue_by_day(sales, start_date, end_date, category_id)
         elif period == RevenuePeriodEnum.WEEKLY:
@@ -83,31 +77,25 @@ class RevenueService:
         """
         Compare revenue between two time periods.
         """
-        # Get revenue for both periods
         period1_data = await self.get_revenue_by_period(period, period1_start, period1_end, category_id)
         period2_data = await self.get_revenue_by_period(period, period2_start, period2_end, category_id)
         
-        # Calculate summary data for period 1
         period1_total_revenue = sum(item.total_revenue for item in period1_data)
         period1_total_sales = sum(item.total_sales for item in period1_data)
         period1_avg_order = period1_total_revenue / period1_total_sales if period1_total_sales > 0 else 0
         
-        # Calculate summary data for period 2
         period2_total_revenue = sum(item.total_revenue for item in period2_data)
         period2_total_sales = sum(item.total_sales for item in period2_data)
         period2_avg_order = period2_total_revenue / period2_total_sales if period2_total_sales > 0 else 0
         
-        # Calculate changes
         revenue_change = period2_total_revenue - period1_total_revenue
         revenue_change_pct = (revenue_change / period1_total_revenue * 100) if period1_total_revenue > 0 else 0
         sales_change = period2_total_sales - period1_total_sales
         sales_change_pct = (sales_change / period1_total_sales * 100) if period1_total_sales > 0 else 0
         
-        # Format period names
         period1_name = f"{period1_start.strftime('%Y-%m-%d')} to {period1_end.strftime('%Y-%m-%d')}"
         period2_name = f"{period2_start.strftime('%Y-%m-%d')} to {period2_end.strftime('%Y-%m-%d')}"
         
-        # Create response
         return RevenueCompareResponse(
             period1=RevenuePeriodData(
                 period_name=period1_name,
@@ -140,7 +128,6 @@ class RevenueService:
         result = []
         current_date = start_date
         
-        # Initialize daily buckets
         daily_data = {}
         while current_date <= end_date:
             daily_data[current_date] = {
@@ -150,7 +137,6 @@ class RevenueService:
             }
             current_date += timedelta(days=1)
         
-        # Process sales
         for sale in sales:
             sale_date = sale.sale_date.date()
             if sale_date in daily_data:
@@ -158,7 +144,6 @@ class RevenueService:
                 daily_data[sale_date]["total_sales"] += sum(item.quantity for item in sale.items)
                 daily_data[sale_date]["order_count"] += 1
         
-        # Create revenue responses
         for day, data in daily_data.items():
             avg_order = data["total_revenue"] / data["order_count"] if data["order_count"] > 0 else 0
             result.append(
@@ -185,11 +170,9 @@ class RevenueService:
         """Group sales by week and calculate revenue metrics."""
         result = []
         
-        # Calculate first day of week for start date (assuming Monday is first day)
-        start_weekday = start_date.weekday()  # 0 for Monday, 6 for Sunday
+        start_weekday = start_date.weekday()
         first_day = start_date - timedelta(days=start_weekday)
         
-        # Initialize weekly buckets
         weekly_data = {}
         current_week_start = first_day
         
@@ -203,7 +186,6 @@ class RevenueService:
             }
             current_week_start += timedelta(days=7)
         
-        # Process sales
         for sale in sales:
             sale_date = sale.sale_date.date()
             sale_weekday = sale_date.weekday()
@@ -214,7 +196,6 @@ class RevenueService:
                 weekly_data[sale_week_start]["total_sales"] += sum(item.quantity for item in sale.items)
                 weekly_data[sale_week_start]["order_count"] += 1
         
-        # Create revenue responses
         for week_start, data in weekly_data.items():
             avg_order = data["total_revenue"] / data["order_count"] if data["order_count"] > 0 else 0
             result.append(
@@ -241,7 +222,6 @@ class RevenueService:
         """Group sales by month and calculate revenue metrics."""
         result = []
         
-        # Initialize monthly buckets
         monthly_data = {}
         current_year = start_date.year
         current_month = start_date.month
@@ -258,14 +238,12 @@ class RevenueService:
                 "order_count": 0
             }
             
-            # Move to next month
             if current_month == 12:
                 current_month = 1
                 current_year += 1
             else:
                 current_month += 1
         
-        # Process sales
         for sale in sales:
             sale_date = sale.sale_date.date()
             month_start = date(sale_date.year, sale_date.month, 1)
@@ -275,7 +253,6 @@ class RevenueService:
                 monthly_data[month_start]["total_sales"] += sum(item.quantity for item in sale.items)
                 monthly_data[month_start]["order_count"] += 1
         
-        # Create revenue responses
         for month_start, data in monthly_data.items():
             avg_order = data["total_revenue"] / data["order_count"] if data["order_count"] > 0 else 0
             result.append(
@@ -302,7 +279,6 @@ class RevenueService:
         """Group sales by year and calculate revenue metrics."""
         result = []
         
-        # Initialize yearly buckets
         yearly_data = {}
         for year in range(start_date.year, end_date.year + 1):
             year_start = date(year, 1, 1)
@@ -316,7 +292,6 @@ class RevenueService:
                 "order_count": 0
             }
         
-        # Process sales
         for sale in sales:
             sale_year = sale.sale_date.year
             
@@ -325,7 +300,6 @@ class RevenueService:
                 yearly_data[sale_year]["total_sales"] += sum(item.quantity for item in sale.items)
                 yearly_data[sale_year]["order_count"] += 1
         
-        # Create revenue responses
         for year, data in yearly_data.items():
             avg_order = data["total_revenue"] / data["order_count"] if data["order_count"] > 0 else 0
             result.append(

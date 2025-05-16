@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -26,7 +26,6 @@ class SalesService:
             )
         )
 
-        # Apply filters
         if filters.start_date:
             query = query.where(Sale.sale_date >= filters.start_date)
         if filters.end_date:
@@ -38,7 +37,6 @@ class SalesService:
                 Category.id == filters.category_id
             )
 
-        # Apply pagination
         query = query.order_by(Sale.sale_date.desc()).offset(offset).limit(limit)
 
         result = await self.db.execute(query)
@@ -71,7 +69,6 @@ class SalesService:
         """
         Create a new sale with items.
         """
-        # Create sale
         sale = Sale(
             customer_id=sale_data.customer_id,
             payment_method=sale_data.payment_method,
@@ -79,9 +76,8 @@ class SalesService:
             total_amount=sum(item.unit_price * item.quantity for item in sale_data.items)
         )
         self.db.add(sale)
-        await self.db.flush()  # Get the sale ID
+        await self.db.flush()
 
-        # Add sale items
         for item_data in sale_data.items:
             sale_item = SaleItem(
                 sale_id=sale.id,
@@ -95,7 +91,6 @@ class SalesService:
         await self.db.commit()
         await self.db.refresh(sale)
 
-        # Load the full response
         return await self.get_sale_by_id(sale.id)
 
     async def _format_sale_response(self, sale: Sale) -> SaleResponse:

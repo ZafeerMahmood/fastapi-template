@@ -30,13 +30,11 @@ class ProductsService:
             )
         )
 
-        # Apply filters
         if category_id:
             query = query.where(Product.category_id == category_id)
         if name:
             query = query.where(Product.name.ilike(f"%{name}%"))
 
-        # Apply pagination
         query = query.order_by(Product.name).offset(offset).limit(limit)
 
         result = await self.db.execute(query)
@@ -69,7 +67,6 @@ class ProductsService:
         """
         Register a new product.
         """
-        # Create product
         product = Product(
             name=product_data.name,
             description=product_data.description,
@@ -81,7 +78,6 @@ class ProductsService:
         self.db.add(product)
         await self.db.flush()
 
-        # Create initial inventory
         inventory = Inventory(
             product_id=product.id,
             quantity=0
@@ -91,7 +87,6 @@ class ProductsService:
         await self.db.commit()
         await self.db.refresh(product)
 
-        # Load related data
         query = (
             select(Product)
             .options(
@@ -111,7 +106,6 @@ class ProductsService:
         """
         Update details of a specific product.
         """
-        # Check if product exists
         query = (
             select(Product)
             .options(
@@ -126,7 +120,6 @@ class ProductsService:
         if not product:
             return None
 
-        # Update product data
         update_data = product_data.model_dump(exclude_unset=True)
         if update_data:
             stmt = (
@@ -137,7 +130,6 @@ class ProductsService:
             await self.db.execute(stmt)
             await self.db.commit()
 
-            # Refresh product data
             result = await self.db.execute(query)
             product = result.unique().scalar_one()
 
@@ -147,7 +139,6 @@ class ProductsService:
         """
         Delete a specific product.
         """
-        # Check if product exists
         query = select(Product).where(Product.id == product_id)
         result = await self.db.execute(query)
         product = result.scalar_one_or_none()
@@ -155,7 +146,6 @@ class ProductsService:
         if not product:
             return False
 
-        # Delete product
         stmt = sqlalchemy_delete(Product).where(Product.id == product_id)
         await self.db.execute(stmt)
         await self.db.commit()
